@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<!-- ============================================================
+     SIMULADOR DE CHAT ROMÁNTICO - VERSIÓN FINAL
+     Un regalo hecho con todo mi amor para Dorys Adriana 💛
+
+     === CÓMO ARMO MIS CARPETAS ANTES DE SUBIRLO A LA WEB ===
+     Junto a este archivo HTML creo estas dos carpetas:
+
+       mi-proyecto/
+       ├── index.html        <- este archivo
+       ├── img/
+       │   ├── perfil.jpg     <- foto de perfil de Dorys
+       │   ├── recuerdo1.jpg  <- fotos de nuestros recuerdos
+       │   ├── recuerdo2.jpg
+       │   └── recuerdo3.jpg
+       └── audio/
+           └── cancion.mp3    <- nuestra canción
+
+     Si respeto esos nombres exactos, todo funciona sin tocar el código.
+     ============================================================ -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mi Cachetona 💛</title>
+
+<style>
+/* ============================================================
+   1. PALETA DE COLORES Y VARIABLES
+   --- Aquí puedo cambiar todos los colores del chat fácilmente ---
+   ============================================================ */
+:root {
+  --fondo-app: #14100f;          /* Fondo general (modo oscuro cálido) */
+  --fondo-chat: #1c1614;         /* Fondo del área de mensajes */
+  --cabecera: #241a17;           /* Color de la barra superior */
+  --barra-input: #241a17;        /* Color de la barra para escribir */
+
+  --burbuja-mia: #7a4a2e;        /* Color de MIS mensajes (derecha) */
+  --burbuja-ella: #2e2421;       /* Color de SUS mensajes (izquierda) */
+  --burbuja-recuerdo: #5b2a3a;   /* Color de la tarjeta de "Recuerdos" */
+
+  --texto-claro: #f5ece6;        /* Texto principal */
+  --texto-suave: #b8a89e;        /* Texto secundario (hora, estado) */
+  --acento: #e8b04b;             /* Dorado cálido para detalles */
+  --acento-rosa: #e0788f;        /* Rosa para el corazón */
+}
+
+/* ============================================================
+   2. ESTILOS GENERALES Y RESET
+   ============================================================ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  /* --- Tipografía moderna --- */
+  font-family: 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+  background: var(--fondo-app);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Contenedor principal: ocupa toda la pantalla como una app nativa */
+.app {
+  width: 100%;
+  max-width: 480px;   /* En pantallas grandes se ve como un móvil */
+  height: 100%;
+  height: 100dvh;     /* Altura real en móviles */
+  display: flex;
+  flex-direction: column;
+  background: var(--fondo-chat);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ============================================================
+   3. PANTALLA DE BLOQUEO (CONTRASEÑA DE ANIVERSARIO)
+   --- Esta es la pantalla que aparece antes de entrar al chat ---
+   ============================================================ */
+.bloqueo {
+  position: absolute;
+  inset: 0;                /* Cubre toda la app */
+  z-index: 100;
+  background: linear-gradient(160deg, #1a0f0c, #2e1a14 70%, #3d1f2b);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  text-align: center;
+  transition: opacity 0.8s ease;   /* Animación de fade-out al desbloquear */
+}
+
+/* Cuando se desbloquea, esta clase oculta la pantalla suavemente */
+.bloqueo.oculto {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Corazón grande decorativo de la pantalla de bloqueo */
+.bloqueo .candado {
+  font-size: 60px;
+  margin-bottom: 18px;
+  animation: latir 2s infinite ease-in-out;
+}
+
+.bloqueo h1 {
+  color: var(--texto-claro);
+  font-size: 21px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.bloqueo p {
+  color: var(--texto-suave);
+  font-size: 14px;
+  margin-bottom: 26px;
+  line-height: 1.5;
+}
+
+/* Selector de fecha (calendario) del aniversario */
+.bloqueo input[type="date"] {
+  width: 100%;
+  max-width: 280px;
+  background: rgba(0,0,0,0.35);
+  border: 1.5px solid rgba(232,176,75,0.3);
+  border-radius: 14px;
+  padding: 14px 18px;
+  color: var(--texto-claro);
+  font-size: 16px;
+  text-align: center;
+  outline: none;
+  transition: border 0.25s ease;
+  font-family: inherit;
+}
+.bloqueo input[type="date"]:focus { border-color: var(--acento); }
+/* Hace que el iconito del calendario se vea claro sobre fondo oscuro */
+.bloqueo input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+/* Botón de desbloquear */
+.bloqueo button {
+  margin-top: 16px;
+  background: var(--acento);
+  color: var(--fondo-app);
+  border: none;
+  border-radius: 14px;
+  padding: 13px 36px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+.bloqueo button:hover  { transform: scale(1.05); background: #f0bd5c; }
+.bloqueo button:active { transform: scale(0.95); }
+
+/* Mensaje de error cuando la fecha es incorrecta */
+.bloqueo .error {
+  color: var(--acento-rosa);
+  font-size: 13.5px;
+  margin-top: 16px;
+  height: 18px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.bloqueo .error.visible { opacity: 1; }
+
+/* Pequeña sacudida cuando la fecha está mal */
+@keyframes sacudir {
+  0%,100% { transform: translateX(0); }
+  20%,60% { transform: translateX(-8px); }
+  40%,80% { transform: translateX(8px); }
+}
+.sacudir { animation: sacudir 0.4s ease; }
+
+/* ============================================================
+   4. CABECERA (HEADER)
+   ============================================================ */
+.cabecera {
+  background: var(--cabecera);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  z-index: 10;
+  border-bottom: 1px solid rgba(232,176,75,0.12);
+}
+
+.cabecera .flecha {
+  color: var(--texto-claro);
+  font-size: 22px;
+  opacity: 0.8;
+}
+
+/* Foto de perfil */
+.cabecera .foto {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--acento);
+}
+
+.cabecera .info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.cabecera .nombre {
+  color: var(--texto-claro);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.cabecera .estado {
+  color: var(--acento);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.cabecera .iconos {
+  display: flex;
+  gap: 14px;
+  font-size: 18px;
+}
+
+/* Botones de la cabecera (canción, llamada, video) */
+.cabecera .iconos span,
+.cabecera .iconos button {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.cabecera .iconos button:hover { opacity: 1; transform: scale(1.2); }
+
+/* El botón de la canción "late" cuando está sonando */
+.cabecera .iconos button.sonando {
+  opacity: 1;
+  animation: latir 1.2s infinite ease-in-out;
+}
+
+/* ============================================================
+   5. ÁREA DE MENSAJES
+   ============================================================ */
+.mensajes {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: var(--fondo-chat);
+  background-image: radial-gradient(rgba(224,120,143,0.05) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.mensajes::-webkit-scrollbar { width: 5px; }
+.mensajes::-webkit-scrollbar-thumb {
+  background: rgba(232,176,75,0.3);
+  border-radius: 10px;
+}
+
+/* --- BURBUJA DE MENSAJE (estilo común) --- */
+.burbuja {
+  max-width: 78%;
+  padding: 9px 13px 7px;
+  border-radius: 16px;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--texto-claro);
+  position: relative;
+  word-wrap: break-word;
+  animation: aparecer 0.35s ease;
+}
+
+/* MIS mensajes: alineados a la derecha */
+.burbuja.mia {
+  background: var(--burbuja-mia);
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+/* SUS mensajes: alineados a la izquierda */
+.burbuja.ella {
+  background: var(--burbuja-ella);
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+}
+
+.burbuja .hora {
+  display: block;
+  font-size: 10.5px;
+  color: var(--texto-suave);
+  text-align: right;
+  margin-top: 3px;
+}
+
+/* --- TARJETA DE RECUERDO (formato destacado) --- */
+.burbuja.recuerdo {
+  background: linear-gradient(145deg, var(--burbuja-recuerdo), #3d1f2b);
+  align-self: flex-start;
+  max-width: 85%;
+  border: 1px solid rgba(232,176,75,0.4);
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.45);
+}
+
+.burbuja.recuerdo .titulo-recuerdo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--acento);
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.burbuja.recuerdo .texto-recuerdo {
+  font-size: 14.5px;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* Foto dentro de una tarjeta de recuerdo */
+.burbuja.recuerdo .foto-recuerdo {
+  width: 100%;
+  border-radius: 12px;
+  margin: 8px 0 4px;
+  display: block;
+  border: 1px solid rgba(232,176,75,0.25);
+}
+
+/* --- INDICADOR DE "ESCRIBIENDO..." --- */
+.escribiendo {
+  align-self: flex-start;
+  background: var(--burbuja-ella);
+  padding: 12px 16px;
+  border-radius: 16px;
+  border-bottom-left-radius: 4px;
+  display: flex;
+  gap: 4px;
+  animation: aparecer 0.3s ease;
+}
+
+.escribiendo span {
+  width: 7px;
+  height: 7px;
+  background: var(--texto-suave);
+  border-radius: 50%;
+  animation: rebotar 1.4s infinite ease-in-out;
+}
+.escribiendo span:nth-child(2) { animation-delay: 0.2s; }
+.escribiendo span:nth-child(3) { animation-delay: 0.4s; }
+
+/* ============================================================
+   6. ANIMACIONES
+   ============================================================ */
+@keyframes aparecer {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rebotar {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30%           { transform: translateY(-6px); opacity: 1; }
+}
+
+@keyframes latir {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.2); }
+}
+
+/* Animación de la lluvia de corazones */
+@keyframes caer {
+  0%   { transform: translateY(-10vh) rotate(0deg);   opacity: 1; }
+  100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+}
+
+/* ============================================================
+   7. LLUVIA DE CORAZONES
+   ============================================================ */
+.lluvia {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;   /* No estorba al usar el chat */
+  overflow: hidden;
+  z-index: 50;
+}
+
+.corazon-cae {
+  position: absolute;
+  top: -10vh;
+  font-size: 24px;
+  animation: caer linear forwards;
+}
+
+/* ============================================================
+   8. BARRA INFERIOR PARA ESCRIBIR
+   ============================================================ */
+.barra-input {
+  background: var(--barra-input);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid rgba(232,176,75,0.12);
+}
+
+.btn-recuerdo {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+  animation: latir 2.5s infinite ease-in-out;
+}
+.btn-recuerdo:hover  { transform: scale(1.25); }
+.btn-recuerdo:active { transform: scale(0.9); }
+
+.barra-input input {
+  flex: 1;
+  background: var(--fondo-app);
+  border: 1px solid rgba(232,176,75,0.15);
+  border-radius: 22px;
+  padding: 11px 16px;
+  color: var(--texto-claro);
+  font-size: 14.5px;
+  outline: none;
+  transition: border 0.2s ease;
+}
+.barra-input input:focus { border-color: var(--acento); }
+.barra-input input::placeholder { color: var(--texto-suave); }
+
+.btn-enviar {
+  background: var(--acento);
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+.btn-enviar:hover  { transform: scale(1.08); background: #f0bd5c; }
+.btn-enviar:active { transform: scale(0.92); }
+.btn-enviar svg { width: 20px; height: 20px; fill: var(--fondo-app); }
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- ========================================================
+       PANTALLA DE BLOQUEO (CONTRASEÑA DE ANIVERSARIO)
+       ======================================================== -->
+  <div class="bloqueo" id="bloqueo">
+    <div class="candado">💛</div>
+    <h1>Hola, mi amor</h1>
+    <p>Selecciona la fecha de nuestro aniversario para acceder 💛</p>
+
+    <!-- Calendario donde Dorys elige la fecha (imposible equivocarse de formato) -->
+    <input type="date" id="campoFecha">
+
+    <button id="btnDesbloquear">Abrir nuestro chat 💌</button>
+
+    <!-- Mensaje de error (aparece si la fecha es incorrecta) -->
+    <div class="error" id="mensajeError">Nop, intenta otra vez, cachetona...</div>
+  </div>
+
+  <!-- ========================================================
+       CABECERA
+       ======================================================== -->
+  <div class="cabecera">
+    <span class="flecha">‹</span>
+
+    <!-- ========================================================
+         FOTO DE PERFIL DE DORYS
+         Solo tengo que guardar su foto dentro de la carpeta "img"
+         y llamarla exactamente "perfil.jpg". ¡Listo, nada más!
+         ======================================================== -->
+    <img class="foto" src="img/perfil.jpg" alt="Foto de perfil">
+
+    <div class="info">
+      <!-- --- AQUÍ CAMBIO EL NOMBRE O APODO --- -->
+      <span class="nombre">Mi Cachetona 💛</span>
+      <span class="estado" id="estado">En línea</span>
+    </div>
+
+    <div class="iconos">
+      <!-- Botón de NUESTRA CANCIÓN -->
+      <button id="btnCancion" title="Nuestra canción">🎵</button>
+      <span>📹</span>
+      <span>📞</span>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       ÁREA DE MENSAJES
+       ======================================================== -->
+  <div class="mensajes" id="mensajes">
+    <!-- Los mensajes se generan automáticamente con JavaScript -->
+  </div>
+
+  <!-- ========================================================
+       BARRA PARA ESCRIBIR
+       ======================================================== -->
+  <div class="barra-input">
+    <button class="btn-recuerdo" id="btnRecuerdo" title="Enviar un recuerdo">💛</button>
+
+    <input type="text" id="campoTexto"
+           placeholder="Escríbele algo bonito..."
+           autocomplete="off">
+
+    <button class="btn-enviar" id="btnEnviar" title="Enviar">
+      <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+    </button>
+  </div>
+
+  <!-- Capa donde caen los corazones (la rellena el JavaScript) -->
+  <div class="lluvia" id="lluvia"></div>
+
+</div>
+
+<!-- ============================================================
+     NUESTRA CANCIÓN (AUDIO DE FONDO)
+     Solo tengo que guardar nuestra canción dentro de la carpeta
+     "audio" y llamarla exactamente "cancion.mp3".
+
+     OJO: tiene que ser un archivo .mp3 real. Spotify y los videos
+     normales de YouTube no se pueden incrustar como audio directo.
+     ============================================================ -->
+<audio id="audioCancion" loop>
+  <source src="audio/nuestra-cancion.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+/* ============================================================
+   9. NUESTRA FECHA DE ANIVERSARIO
+   --- Aquí guardo nuestra fecha en formato AÑO-MES-DÍA ---
+   El calendario del navegador usa siempre este formato (AAAA-MM-DD).
+   ============================================================ */
+const FECHA_ANIVERSARIO = "2022-04-27";   // Aquí pongo el año-mes-día de nuestro aniversario
+
+/* ============================================================
+   10. BANCO DE RESPUESTAS DEL BOT (mi pareja)
+   --- Aquí puedo editar, agregar o quitar respuestas ---
+   Estas se usan cuando mi mensaje NO coincide con palabras clave.
+   ============================================================ */
+const respuestas = [
+  "Me haces sonreír en todo momento 🥰",
+  "Te amo más de lo que las palabras pueden expresar 💛",
+  "¿Ya te dije lo guapa que estás hoy? 😏",
+  "Pensar en ti es mi parte favorita del día",
+  "Eres mi lugar seguro, mi amor",
+  "Contigo todo es más bonito ✨",
+  "No sabes las ganas que tengo de abrazarte",
+  "Eres lo mejor que me ha pasado en la vida",
+  "Cada día te quiero un poquito más",
+  "Tu sonrisa es mi canción favorita 🎶",
+  "Me encanta cómo me haces sentir",
+  "Quiero quedarme contigo para siempre",
+  "Eres mi pensamiento al despertar y al dormir",
+  "Gracias por existir y por elegirme a mí",
+  "Mi corazón es completamente tuyo ❤️",
+  "Te extraño aunque te haya visto hace un rato",
+  "Eres el amor de mi vida, sin dudarlo",
+  "Me derrito cada vez que me hablas así 😳",
+  "Daría todo por estar a tu lado ahora mismo",
+  "Eres mi razón para sonreír",
+  "Contigo aprendí lo que es amar de verdad",
+  "Me robaste el corazón y no lo quiero de vuelta",
+  "Eres tan tierna que me das cosquillitas en el alma",
+  "Quiero envejecer contigo, mi amor",
+  "Tú eres mi hogar, no importa dónde estemos",
+  "Me haces sentir la persona más afortunada del mundo",
+  "Eres mi calma y mi locura favorita",
+  "No hay nadie como tú, eres única 💫",
+  "Te amo hasta el infinito y más allá",
+  "Cada abrazo tuyo vale más que mil palabras",
+  "Eres la melodía más linda de mi vida",
+  "Me encanta perderme en tu mirada",
+  "Tú haces que mi mundo tenga sentido",
+  "Quiero ser tu para siempre y tu nunca terminar",
+  "Eres mi sueño hecho realidad",
+  "Mi felicidad tiene tu nombre escrito 💛",
+  "Te quiero más que ayer y menos que mañana",
+  "Eres el motivo de mis mejores días",
+  "Contigo hasta lo simple se vuelve mágico",
+  "Me encanta que seas mía y que yo sea tuyo",
+  "Eres mi persona favorita en todo el universo",
+  "Tu amor me hace mejor cada día",
+  "Quiero darte besitos hasta cansarme (spoiler: nunca me canso)",
+  "Eres mi cachetona consentida 😘",
+  "Pienso en ti y se me llena el corazón",
+  "Eres mi amor bonito, mi todo",
+  "No me canso de decirte cuánto te amo",
+  "Tú eres mi suerte más grande",
+  "Eres el latido que mi corazón necesita",
+  "Te amo con cada pedacito de mí 💛",
+  "Eres mi cuento de hadas favorito",
+  "Mi alma sonríe cuando estás cerca"
+];
+
+/* ============================================================
+   11. RESPUESTAS INTELIGENTES POR PALABRAS CLAVE
+   --- Aquí edito lo que respondo según lo que yo escriba ---
+   Cada grupo tiene:
+     - palabras: las palabras que activan la respuesta
+     - respuestas: lista de respuestas posibles (elige una al azar)
+     - corazones: true si quiero que caiga lluvia de corazones
+   ============================================================ */
+const respuestasInteligentes = [
+  {
+    // SALUDOS
+    palabras: ["hola", "buenas", "hey", "holi", "buenos dias", "buenas tardes", "buenas noches", "que tal"],
+    respuestas: [
+      "¡Hola mi vida! 🥰 Justo pensaba en ti",
+      "Holaaa mi amor 💛 Qué linda sorpresa verte por aquí",
+      "Hola cachetona, alégrame el día como siempre 😊",
+      "¡Buenas, mi cosita bonita! Te estaba esperando ❤️"
+    ],
+    corazones: false
+  },
+  {
+    // "TE AMO" / "TE QUIERO" - respuesta súper tierna
+    palabras: ["te amo", "te quiero", "love", "te adoro", "i love you"],
+    respuestas: [
+      "Y yo te amo a ti con cada latido de mi corazón 💛 Eres mi todo",
+      "Te amo tantísimo que a veces no me cabe en el pecho ❤️",
+      "Yo te amo más, mi amor... y eso nadie me lo gana 🥰",
+      "Te quiero con el alma entera, hoy, mañana y siempre 💫",
+      "Awww, yo también te amo infinitamente, eres mi persona favorita 💛"
+    ],
+    corazones: true   // ¡Aquí cae lluvia de corazones!
+  },
+  {
+    // BESOS
+    palabras: ["beso", "besos", "muak", "besito", "muac", "mua"],
+    respuestas: [
+      "Muak muak muak 😘😘😘 ¡Mil besos para ti!",
+      "😘💋😘 Toma todos mis besitos, cachetona",
+      "Besitos por aquí, besitos por allá 💋💛 ¡Te como a besos!",
+      "Muaaak 😚 ¡Un beso enorme directo a tu corazón!"
+    ],
+    corazones: true
+  },
+  {
+    // EXTRAÑAR
+    palabras: ["te extraño", "te extrano", "extrano", "extraño", "te echo de menos"],
+    respuestas: [
+      "Yo también te extraño muchísimo 🥺 Ojalá estuvieras aquí ahora",
+      "Te extraño tanto que cuento los momentos para verte 💛",
+      "Aww mi amor, ven y te abrazo fuerte para que no me extrañes más 🤗"
+    ],
+    corazones: false
+  },
+  {
+    // PREGUNTAR CÓMO ESTÁ
+    palabras: ["como estas", "como estás", "como te sientes", "que haces", "qué haces", "como va tu dia"],
+    respuestas: [
+      "Mucho mejor ahora que me escribiste 🥰 ¿Y tú, mi amor?",
+      "Aquí, pensando en ti como casi siempre 😊 ¿Cómo va tu día?",
+      "Feliz de hablar contigo 💛 Cuéntame tú, ¿cómo estás?"
+    ],
+    corazones: false
+  },
+  {
+    // CUMPLIDOS / "ERES HERMOSA" / "GUAPA"
+    palabras: ["hermosa", "bonita", "linda", "guapa", "preciosa", "bella", "hermoso", "guapo"],
+    respuestas: [
+      "Ay, me sonrojas 🙈 ¡Pero tú sí que eres el guapo aquí!",
+      "Gracias mi amor 💛 Contigo me siento la más afortunada",
+      "Lo dice el hombre más hermoso del mundo 😍 te amo"
+    ],
+    corazones: true
+  },
+  {
+    // GRACIAS
+    palabras: ["gracias", "te lo agradezco"],
+    respuestas: [
+      "No tienes que agradecer nada, mi amor 💛 Lo hago con gusto",
+      "Gracias a ti por ser tan increíble conmigo 🥰",
+      "Siempre, mi vida. Haría cualquier cosa por verte feliz ❤️"
+    ],
+    corazones: false
+  },
+  {
+    // DESPEDIDAS / BUENAS NOCHES
+    palabras: ["adios", "adiós", "chao", "me voy", "hasta luego", "nos vemos", "buenas noches descansa"],
+    respuestas: [
+      "No te vayas lejos, ¿sí? 🥺 Te voy a estar esperando 💛",
+      "Cuídate mucho mi amor, te amo. Vuelve pronto a este chat ❤️",
+      "Hasta pronto, cachetón hermoso. Sueña conmigo 😘"
+    ],
+    corazones: false
+  },
+  {
+    // PERDÓN / DISCULPAS
+    palabras: ["perdon", "perdón", "lo siento", "disculpa", "discúlpame"],
+    respuestas: [
+      "Tranquilo mi amor, no hay nada que perdonar 💛 Te amo igual",
+      "Ya está, ya pasó 🤗 Lo importante es que estamos juntos",
+      "Te perdono mil veces si hace falta, cachetón. Eres mi amor ❤️"
+    ],
+    corazones: false
+  },
+  {
+    // ABRAZOS
+    palabras: ["abrazo", "abrazame", "abrázame", "abrazos"],
+    respuestas: [
+      "🤗💛 ¡Toma el abrazo más grande y calentito del mundo!",
+      "Ven aquí, te abrazo fuerte y no te suelto 🤗❤️",
+      "Un abrazo de osito para mi cachetón favorito 🐻💛"
+    ],
+    corazones: true
+  }
+];
+
+/* ============================================================
+   12. BANCO DE RECUERDOS
+   --- Aquí edito nuestras anécdotas reales ---
+   Cada recuerdo tiene:
+     - texto: la anécdota que quiero contar
+     - foto:  ruta de la foto dentro de la carpeta "img".
+              Si no quiero foto, lo dejo como "" (comillas vacías).
+
+   Para los recuerdos CON foto, solo guardo la imagen en la carpeta
+   "img" con el nombre que ya está puesto (recuerdo1.jpg, etc.).
+   ============================================================ */
+const recuerdos = [
+  {
+    texto: "El día que nos conocimos... y supe que algo especial empezaba.",
+    foto: "img/recuerdo22.jpg"   // Sin foto. Si quiero ponerle una: "img/recuerdo22.jpg"
+  },
+  {
+    texto: "Nuestra primera cita, cuando los nervios no me dejaban hablar bien.",
+    foto: "img/recuerdo16.jpg"
+  },
+  {
+    texto: "Esa vez que no parábamos de reír y ni recuerdo por qué.",
+    foto: "img/recuerdo21.jpg"
+  },
+  {
+    texto: "Nuestro primer 'te amo', con el corazón a mil por hora.",
+    foto: "img/recuerdo1.jpg"   // <- Guardo aquí esta foto en la carpeta img
+  },
+  {
+    texto: "La noche que vimos las estrellas y todo se sintió perfecto.",
+    foto: "img/recuerdo15.jpg"
+  },
+  {
+    texto: "Ese viaje juntos donde cada momento fue una aventura.",
+    foto: "img/recuerdo20.jpg"   // <- Guardo aquí esta foto en la carpeta img
+  },
+  {
+    texto: "Cuando tomamos algo con todo tu cariño y me derretí.",
+    foto: "img/recuerdo8.jpg"
+  },
+  {
+    texto: "El día que entendí que quería pasar mi vida contigo.",
+    foto: "img/recuerdo10.jpg"
+  },
+  {
+    texto: "Ese beso que nos dimos y no nos importó nada.",
+    foto: "img/recuerdo23.jpg"
+  },
+  {
+    texto: "Nuestra canción, esa que siempre me recuerda a ti.",
+    foto: "img/recuerdo24.jpg"
+  },
+  {
+    texto: "La primera vez que estuvimos acostados toda la tarde.",
+    foto: "img/recuerdo25.jpg"
+  },
+  {
+    texto: "Cuando me hiciste reír justo cuando más triste estaba.",
+    foto: "img/recuerdo5.jpg"
+  },
+  {
+    texto: "Ese atardecer que vimos juntos y nunca voy a olvidar.",
+    foto: "img/recuerdo23.jpg"   // <- Guardo aquí esta foto en la carpeta img
+  },
+  {
+    texto: "El día que me diste ese abrazo que lo curó todo.",
+    foto: "img/recuerdo11.jpg"
+  },
+  {
+    texto: "Cada 'buenos días' tuyo que convierte mi día en algo lindo.",
+    foto: "img/recuerdo19.jpg"
+  }
+];
+
+/* ============================================================
+   13. MENSAJES SORPRESA POR TEMPORIZADOR
+   --- Aquí edito los mensajes sorpresa ---
+   ============================================================ */
+const mensajesSorpresa = [
+  "¡Solo pasaba a decirte que te extraño! 🥰",
+  "¿En qué piensas? Porque yo pienso en ti 💛",
+  "Oye... te amo, por si lo habías olvidado ❤️",
+  "Aquí, extrañándote un poquito (o un montón)",
+  "No te escribo por molestar, solo quería verte 😊",
+  "Recuerda que eres lo más bonito de mi día",
+  "Psst... ¿sabías que te quiero muchísimo? 💫"
+];
+
+/* ============================================================
+   14. LÓGICA DEL CHAT (JavaScript Vanilla)
+   ============================================================ */
+
+// --- Referencias a los elementos del HTML ---
+const contenedorMensajes = document.getElementById('mensajes');
+const campoTexto         = document.getElementById('campoTexto');
+const btnEnviar          = document.getElementById('btnEnviar');
+const btnRecuerdo        = document.getElementById('btnRecuerdo');
+const estado             = document.getElementById('estado');
+const lluvia             = document.getElementById('lluvia');
+const bloqueo            = document.getElementById('bloqueo');
+const campoFecha         = document.getElementById('campoFecha');
+const btnDesbloquear     = document.getElementById('btnDesbloquear');
+const mensajeError       = document.getElementById('mensajeError');
+const btnCancion         = document.getElementById('btnCancion');
+const audioCancion       = document.getElementById('audioCancion');
+
+let temporizadorSorpresa = null;
+
+// --- Devuelve la hora actual en formato "10:45" ---
+function horaActual() {
+  const ahora = new Date();
+  let h = ahora.getHours();
+  let m = ahora.getMinutes();
+  return (h < 10 ? '0'+h : h) + ':' + (m < 10 ? '0'+m : m);
+}
+
+// --- Hace scroll automático hasta el último mensaje ---
+function bajarScroll() {
+  contenedorMensajes.scrollTop = contenedorMensajes.scrollHeight;
+}
+
+// --- Crea y muestra una burbuja de mensaje normal ---
+function agregarMensaje(texto, quien) {
+  const burbuja = document.createElement('div');
+  burbuja.className = 'burbuja ' + quien;
+  burbuja.innerHTML = texto + '<span class="hora">' + horaActual() + '</span>';
+  contenedorMensajes.appendChild(burbuja);
+  bajarScroll();
+}
+
+// --- Crea y muestra una tarjeta especial de Recuerdo (con o sin foto) ---
+function agregarRecuerdo(recuerdo) {
+  const tarjeta = document.createElement('div');
+  tarjeta.className = 'burbuja recuerdo';
+
+  // Si el recuerdo tiene foto, la incluimos; si no, solo el texto
+  let contenidoFoto = '';
+  if (recuerdo.foto && recuerdo.foto !== '') {
+    contenidoFoto = '<img class="foto-recuerdo" src="' + recuerdo.foto + '" alt="Recuerdo">';
+  }
+
+  tarjeta.innerHTML =
+    '<div class="titulo-recuerdo">✨ ¿Recuerdas esto?</div>' +
+    contenidoFoto +
+    '<div class="texto-recuerdo">' + recuerdo.texto + '</div>' +
+    '<span class="hora">' + horaActual() + '</span>';
+
+  contenedorMensajes.appendChild(tarjeta);
+  bajarScroll();
+}
+
+// --- Muestra el indicador de "Escribiendo..." ---
+function mostrarEscribiendo() {
+  estado.textContent = 'Escribiendo...';
+  const puntos = document.createElement('div');
+  puntos.className = 'escribiendo';
+  puntos.id = 'indicadorEscribiendo';
+  puntos.innerHTML = '<span></span><span></span><span></span>';
+  contenedorMensajes.appendChild(puntos);
+  bajarScroll();
+}
+
+// --- Quita el indicador de "Escribiendo..." ---
+function quitarEscribiendo() {
+  const puntos = document.getElementById('indicadorEscribiendo');
+  if (puntos) puntos.remove();
+  estado.textContent = 'En línea';
+}
+
+// --- Elige un elemento al azar de un array ---
+function alAzar(lista) {
+  return lista[Math.floor(Math.random() * lista.length)];
+}
+
+/* ------------------------------------------------------------
+   QUITAR TILDES Y PASAR A MINÚSCULAS
+   Sirve para que "te amó", "TE AMO" o "te amo" se detecten igual.
+   ------------------------------------------------------------ */
+function normalizar(texto) {
+  return texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");  // elimina los acentos
+}
+
+/* ------------------------------------------------------------
+   CEREBRO DE RESPUESTAS INTELIGENTES
+   Analiza mi mensaje y decide qué responder:
+   1. Busca palabras clave -> respuesta acorde
+   2. Si no encuentra nada -> respuesta aleatoria normal
+   Devuelve un objeto: { texto: "...", corazones: true/false }
+   ------------------------------------------------------------ */
+function pensarRespuesta(miMensaje) {
+  const mensaje = normalizar(miMensaje);
+
+  // Recorro cada grupo de palabras clave
+  for (const grupo of respuestasInteligentes) {
+    for (const palabra of grupo.palabras) {
+      if (mensaje.includes(normalizar(palabra))) {
+        return {
+          texto: alAzar(grupo.respuestas),
+          corazones: grupo.corazones
+        };
+      }
+    }
+  }
+
+  // Si no coincidió ninguna palabra clave -> respuesta aleatoria
+  return { texto: alAzar(respuestas), corazones: false };
+}
+
+/* ------------------------------------------------------------
+   ENVIAR UN MENSAJE MÍO Y RECIBIR RESPUESTA INTELIGENTE
+   ------------------------------------------------------------ */
+function enviarMensaje() {
+  const texto = campoTexto.value.trim();
+  if (texto === '') return;
+
+  // 1. Muestro mi mensaje a la derecha
+  agregarMensaje(texto, 'mia');
+  campoTexto.value = '';
+
+  // 2. El cerebro decide la respuesta ANTES de elegir al azar
+  const respuesta = pensarRespuesta(texto);
+
+  // 3. Si fue un mensaje romántico, lanzo lluvia de corazones
+  if (respuesta.corazones) lluviaDeCorazones();
+
+  // 4. Reinicio el temporizador de mensajes sorpresa
+  reiniciarTemporizador();
+
+  // 5. El bot "escribe" durante 2 a 3 segundos
+  mostrarEscribiendo();
+  const espera = 2000 + Math.random() * 1000;
+
+  setTimeout(function() {
+    quitarEscribiendo();
+    agregarMensaje(respuesta.texto, 'ella');
+  }, espera);
+}
+
+/* ------------------------------------------------------------
+   ENVIAR UN RECUERDO (al tocar el botón del corazón)
+   También lanza lluvia de corazones.
+   ------------------------------------------------------------ */
+function enviarRecuerdo() {
+  lluviaDeCorazones();          // ¡Corazones al instante!
+  reiniciarTemporizador();
+
+  mostrarEscribiendo();
+  setTimeout(function() {
+    quitarEscribiendo();
+    agregarRecuerdo(alAzar(recuerdos));
+  }, 2000);
+}
+
+/* ------------------------------------------------------------
+   LLUVIA DE CORAZONES (efecto confeti)
+   Crea varios corazones que caen desde arriba y se borran solos.
+   --- Aquí puedo cambiar los emojis que caen ---
+   ------------------------------------------------------------ */
+const emojisLluvia = ["💛", "❤️", "💕", "💖", "✨", "💗"];
+
+function lluviaDeCorazones() {
+  const cantidad = 26;   // Aquí cambio cuántos corazones caen
+
+  for (let i = 0; i < cantidad; i++) {
+    const corazon = document.createElement('div');
+    corazon.className = 'corazon-cae';
+    corazon.textContent = alAzar(emojisLluvia);
+
+    // Posición horizontal y tamaño aleatorios
+    corazon.style.left = Math.random() * 100 + '%';
+    corazon.style.fontSize = (16 + Math.random() * 22) + 'px';
+
+    // Velocidad y retraso aleatorios para un efecto natural
+    const duracion = 2.5 + Math.random() * 2.5;
+    corazon.style.animationDuration = duracion + 's';
+    corazon.style.animationDelay = (Math.random() * 0.6) + 's';
+
+    lluvia.appendChild(corazon);
+
+    // Borro el corazón cuando termina de caer (para no saturar)
+    setTimeout(function() { corazon.remove(); }, (duracion + 1) * 1000);
+  }
+}
+
+/* ------------------------------------------------------------
+   MENSAJES SORPRESA POR TEMPORIZADOR
+   Si pasan más de 15 segundos sin que yo escriba, llega un mensaje.
+   ------------------------------------------------------------ */
+function reiniciarTemporizador() {
+  if (temporizadorSorpresa) clearTimeout(temporizadorSorpresa);
+
+  temporizadorSorpresa = setTimeout(function() {
+    mostrarEscribiendo();
+    setTimeout(function() {
+      quitarEscribiendo();
+      agregarMensaje(alAzar(mensajesSorpresa), 'ella');
+      reiniciarTemporizador();
+    }, 2000);
+  }, 15000);   // Aquí cambio los segundos (15000 = 15 seg)
+}
+
+/* ------------------------------------------------------------
+   BOTÓN DE NUESTRA CANCIÓN 🎵
+   Reproduce o pausa la música de fondo.
+   ------------------------------------------------------------ */
+btnCancion.addEventListener('click', function() {
+  if (audioCancion.paused) {
+    audioCancion.volume = 0.4;          // Este es el volumen de nuestra música (suave de fondo)
+    // Intento reproducir; si el archivo no existe, aviso amablemente
+    const promesa = audioCancion.play();
+    if (promesa) {
+      promesa
+        .then(function() {
+          btnCancion.classList.add('sonando');   // El botón empieza a latir
+        })
+        .catch(function() {
+          agregarMensaje("(Aún no he puesto nuestra canción 🎵 La guardo como audio/cancion.mp3)", 'ella');
+        });
+    }
+  } else {
+    audioCancion.pause();
+    btnCancion.classList.remove('sonando');
+  }
+});
+
+/* ------------------------------------------------------------
+   PANTALLA DE BLOQUEO: VERIFICAR LA FECHA DE ANIVERSARIO
+   El calendario entrega la fecha como AAAA-MM-DD, así que la
+   comparo directamente con mi constante FECHA_ANIVERSARIO.
+   ------------------------------------------------------------ */
+function verificarFecha() {
+  if (campoFecha.value === FECHA_ANIVERSARIO) {
+    // ¡Fecha correcta! Desbloqueamos el chat con fade-out
+    bloqueo.classList.add('oculto');
+    lluviaDeCorazones();   // Corazones de bienvenida 💛
+
+    // Al terminar la animación, lanzo el mensaje de bienvenida
+    setTimeout(function() {
+      bloqueo.style.display = 'none';
+      iniciarChat();
+    }, 800);
+  } else {
+    // Fecha incorrecta (o sin elegir): muestro el mensaje y sacudo el campo
+    mensajeError.classList.add('visible');
+    campoFecha.classList.add('sacudir');
+    setTimeout(function() {
+      campoFecha.classList.remove('sacudir');
+    }, 400);
+  }
+}
+
+btnDesbloquear.addEventListener('click', verificarFecha);
+campoFecha.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') verificarFecha();
+});
+
+/* ------------------------------------------------------------
+   MENSAJE DE BIENVENIDA (se activa al desbloquear el chat)
+   --- Aquí puedo cambiar el primer mensaje que ve mi pareja ---
+   ------------------------------------------------------------ */
+function iniciarChat() {
+  mostrarEscribiendo();
+  setTimeout(function() {
+    quitarEscribiendo();
+    agregarMensaje("Lo lograste, mi amor 💛 Hice este chat solo para ti...", 'ella');
+    setTimeout(function() {
+      mostrarEscribiendo();
+      setTimeout(function() {
+        quitarEscribiendo();
+        agregarMensaje("Escríbeme algo y verás 😊 Toca el 💛 para revivir nuestros recuerdos.", 'ella');
+        reiniciarTemporizador();
+      }, 2200);
+    }, 800);
+  }, 1500);
+}
+
+/* ------------------------------------------------------------
+   EVENTOS: clics y tecla Enter del chat
+   ------------------------------------------------------------ */
+btnEnviar.addEventListener('click', enviarMensaje);
+btnRecuerdo.addEventListener('click', enviarRecuerdo);
+campoTexto.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') enviarMensaje();
+});
+</script>
+
+</body>
+</html>
